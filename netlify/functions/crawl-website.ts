@@ -11,6 +11,7 @@
 // uses for the AI pass; this function doesn't attempt that yet.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 import { crawlSite } from "./_crawler";
 
 const DEFAULT_SITEMAP_URL = process.env.WEBSITE_SITEMAP_URL ?? "https://www.getgenea.com/sitemap.xml";
@@ -33,11 +34,11 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
 
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
 
   const { data: audit, error: auditError } = await supabase
@@ -46,10 +47,10 @@ export const handler: Handler = async (event) => {
     .eq("id", body.audit_id)
     .maybeSingle();
   if (auditError) {
-    return { statusCode: 500, body: JSON.stringify({ error: auditError.message }) };
+    return json(500, { error: auditError.message });
   }
   if (!audit) {
-    return { statusCode: 404, body: JSON.stringify({ error: `No audit found with id ${body.audit_id}` }) };
+    return json(404, { error: `No audit found with id ${body.audit_id}` });
   }
 
   const sitemapUrl = body.sitemap_url ?? DEFAULT_SITEMAP_URL;
@@ -59,19 +60,16 @@ export const handler: Handler = async (event) => {
   const summary = await crawlSite(sitemapUrl, { maxPages, crawlDelayMs });
 
   if (summary.pages.length === 0) {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        contentItems: [],
-        crawlSummary: {
-          sitemapUrl: summary.sitemapUrl,
-          discoveredUrlCount: summary.discoveredUrlCount,
-          crawledCount: summary.crawledCount,
-          skippedCount: summary.skippedCount,
-          failures: summary.failures,
-        },
-      }),
-    };
+    return json(200, {
+      contentItems: [],
+      crawlSummary: {
+        sitemapUrl: summary.sitemapUrl,
+        discoveredUrlCount: summary.discoveredUrlCount,
+        crawledCount: summary.crawledCount,
+        skippedCount: summary.skippedCount,
+        failures: summary.failures,
+      },
+    });
   }
 
   const rows = summary.pages.map((page) => ({
@@ -85,20 +83,17 @@ export const handler: Handler = async (event) => {
 
   const { data, error } = await supabase.from("content_items").insert(rows).select();
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  return {
-    statusCode: 201,
-    body: JSON.stringify({
-      contentItems: data,
-      crawlSummary: {
-        sitemapUrl: summary.sitemapUrl,
-        discoveredUrlCount: summary.discoveredUrlCount,
-        crawledCount: summary.crawledCount,
-        skippedCount: summary.skippedCount,
-        failures: summary.failures,
-      },
-    }),
-  };
+  return json(201, {
+    contentItems: data,
+    crawlSummary: {
+      sitemapUrl: summary.sitemapUrl,
+      discoveredUrlCount: summary.discoveredUrlCount,
+      crawledCount: summary.crawledCount,
+      skippedCount: summary.skippedCount,
+      failures: summary.failures,
+    },
+  });
 };

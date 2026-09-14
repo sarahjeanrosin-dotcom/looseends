@@ -1,10 +1,11 @@
 // POST /.netlify/functions/add-content-items
 // Saves a batch of normalized content items ({ source, path, title,
 // contentText, extractable }) against an audit. Used by the Stage 1
-// SharePoint upload step today; Stage 2's website crawler will call this
-// same endpoint with source: "website" once it exists.
+// SharePoint upload step and the Stage 2 website crawler, and by a live
+// Claude session pulling SharePoint content directly (see README).
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 import type { NormalizedContentItem } from "./_types";
 
 interface RequestBody {
@@ -34,23 +35,20 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
 
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
   if (!Array.isArray(body.items) || body.items.length === 0) {
-    return { statusCode: 400, body: JSON.stringify({ error: "items must be a non-empty array" }) };
+    return json(400, { error: "items must be a non-empty array" });
   }
   const invalidIndex = body.items.findIndex((item) => !isValidItem(item));
   if (invalidIndex !== -1) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: `items[${invalidIndex}] is missing required fields (source, path, title, contentText)`,
-      }),
-    };
+    return json(400, {
+      error: `items[${invalidIndex}] is missing required fields (source, path, title, contentText)`,
+    });
   }
 
   const { data: audit, error: auditError } = await supabase
@@ -59,10 +57,10 @@ export const handler: Handler = async (event) => {
     .eq("id", body.audit_id)
     .maybeSingle();
   if (auditError) {
-    return { statusCode: 500, body: JSON.stringify({ error: auditError.message }) };
+    return json(500, { error: auditError.message });
   }
   if (!audit) {
-    return { statusCode: 404, body: JSON.stringify({ error: `No audit found with id ${body.audit_id}` }) };
+    return json(404, { error: `No audit found with id ${body.audit_id}` });
   }
 
   const rows = body.items.map((item) => ({
@@ -76,8 +74,8 @@ export const handler: Handler = async (event) => {
 
   const { data, error } = await supabase.from("content_items").insert(rows).select();
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  return { statusCode: 201, body: JSON.stringify({ contentItems: data }) };
+  return json(201, { contentItems: data });
 };

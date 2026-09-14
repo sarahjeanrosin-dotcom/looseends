@@ -6,6 +6,7 @@
 // (single user, a modest number of audits/findings).
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 import type { Audit, Finding } from "./_types";
 
 export type LiftCounts = Record<1 | 2 | 3 | 4 | 5, number>;
@@ -33,10 +34,10 @@ export const handler: Handler = async (event) => {
   ]);
 
   if (auditsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: auditsError.message }) };
+    return json(500, { error: auditsError.message });
   }
   if (findingsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: findingsError.message }) };
+    return json(500, { error: findingsError.message });
   }
 
   const liftCountsByAudit = new Map<string, LiftCounts>();
@@ -54,5 +55,5 @@ export const handler: Handler = async (event) => {
     liftCounts: liftCountsByAudit.get(audit.id) ?? emptyLiftCounts(),
   }));
 
-  return { statusCode: 200, body: JSON.stringify({ audits: auditsWithCounts }) };
+  return json(200, { audits: auditsWithCounts });
 };

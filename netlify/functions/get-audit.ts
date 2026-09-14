@@ -4,6 +4,7 @@
 // Audits (Stage 6). CSV formatting is a separate endpoint (Stage 5).
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "GET") {
@@ -12,7 +13,7 @@ export const handler: Handler = async (event) => {
 
   const id = event.queryStringParameters?.id;
   if (!id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "id query param is required" }) };
+    return json(400, { error: "id query param is required" });
   }
 
   const [
@@ -28,17 +29,17 @@ export const handler: Handler = async (event) => {
   ]);
 
   if (auditError) {
-    return { statusCode: 404, body: JSON.stringify({ error: auditError.message }) };
+    return json(404, { error: auditError.message });
   }
   if (findingsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: findingsError.message }) };
+    return json(500, { error: findingsError.message });
   }
   if (contentItemsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: contentItemsError.message }) };
+    return json(500, { error: contentItemsError.message });
   }
   if (releaseBriefsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: releaseBriefsError.message }) };
+    return json(500, { error: releaseBriefsError.message });
   }
 
-  return { statusCode: 200, body: JSON.stringify({ audit, findings, contentItems, releaseBriefs }) };
+  return json(200, { audit, findings, contentItems, releaseBriefs });
 };

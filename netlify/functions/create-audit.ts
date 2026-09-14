@@ -1,9 +1,8 @@
 // POST /.netlify/functions/create-audit
 // Starts a new audit run: creates an `audits` row with status "pending".
-// Stage 0: stub only — no crawl, no AI pass, no file handling yet.
-// That logic lands in Stage 3 (release brief ingestion + AI relevance pass).
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -14,11 +13,11 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
 
   if (!body.release_name) {
-    return { statusCode: 400, body: JSON.stringify({ error: "release_name is required" }) };
+    return json(400, { error: "release_name is required" });
   }
 
   const { data, error } = await supabase
@@ -33,11 +32,8 @@ export const handler: Handler = async (event) => {
     .single();
 
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  // TODO (Stage 3): kick off the website crawl + AI relevance pass here
-  // (likely as a background function given Netlify's execution time limits).
-
-  return { statusCode: 201, body: JSON.stringify({ audit: data }) };
+  return json(201, { audit: data });
 };

@@ -6,6 +6,7 @@
 // download — no client-side blob/JS needed.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 import type { Audit, Finding } from "./_types";
 
 const COLUMNS = [
@@ -55,7 +56,7 @@ export const handler: Handler = async (event) => {
 
   const id = event.queryStringParameters?.id;
   if (!id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "id query param is required" }) };
+    return json(400, { error: "id query param is required" });
   }
 
   const [{ data: audit, error: auditError }, { data: findings, error: findingsError }] = await Promise.all([
@@ -63,10 +64,10 @@ export const handler: Handler = async (event) => {
     supabase.from("findings").select("*").eq("audit_id", id).returns<Finding[]>(),
   ]);
   if (auditError) {
-    return { statusCode: 404, body: JSON.stringify({ error: auditError.message }) };
+    return json(404, { error: auditError.message });
   }
   if (findingsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: findingsError.message }) };
+    return json(500, { error: findingsError.message });
   }
 
   const csv = buildCsv(audit, findings ?? []);

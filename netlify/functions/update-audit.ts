@@ -4,6 +4,7 @@
 // Run Audit click) and lets the user keep editing name/description after.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 
 interface RequestBody {
   audit_id?: string;
@@ -20,17 +21,17 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
 
   const updates: Record<string, string> = {};
   if (body.release_name !== undefined) updates.release_name = body.release_name;
   if (body.description !== undefined) updates.description = body.description;
   if (Object.keys(updates).length === 0) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Nothing to update" }) };
+    return json(400, { error: "Nothing to update" });
   }
 
   const { data, error } = await supabase
@@ -40,8 +41,8 @@ export const handler: Handler = async (event) => {
     .select()
     .single();
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  return { statusCode: 200, body: JSON.stringify({ audit: data }) };
+  return json(200, { audit: data });
 };

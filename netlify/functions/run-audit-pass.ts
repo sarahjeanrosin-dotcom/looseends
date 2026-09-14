@@ -10,6 +10,7 @@
 // resume after any single invocation fails or times out.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 import { anthropic } from "./_anthropic";
 import { buildReleaseContext, evaluateBatch, DEFAULT_MODEL } from "./_matcher";
 import type { Audit, ContentItem, Finding, ReleaseBrief } from "./_types";
@@ -33,10 +34,10 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
 
   const { data: audit, error: auditError } = await supabase
@@ -45,7 +46,7 @@ export const handler: Handler = async (event) => {
     .eq("id", body.audit_id)
     .single<Audit>();
   if (auditError) {
-    return { statusCode: 404, body: JSON.stringify({ error: auditError.message }) };
+    return json(404, { error: auditError.message });
   }
 
   const { count: totalItems, error: countError } = await supabase
@@ -53,15 +54,12 @@ export const handler: Handler = async (event) => {
     .select("*", { count: "exact", head: true })
     .eq("audit_id", body.audit_id);
   if (countError) {
-    return { statusCode: 500, body: JSON.stringify({ error: countError.message }) };
+    return json(500, { error: countError.message });
   }
   if (!totalItems) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "No content items to evaluate for this audit — add SharePoint content or crawl the website first.",
-      }),
-    };
+    return json(400, {
+      error: "No content items to evaluate for this audit — add SharePoint content or crawl the website first.",
+    });
   }
 
   if (audit.status === "pending") {
@@ -78,16 +76,13 @@ export const handler: Handler = async (event) => {
     .limit(batchSize)
     .returns<ContentItem[]>();
   if (batchError) {
-    return { statusCode: 500, body: JSON.stringify({ error: batchError.message }) };
+    return json(500, { error: batchError.message });
   }
 
   if (!batch || batch.length === 0) {
     // Nothing left unprocessed — this audit is done.
     await supabase.from("audits").update({ status: "complete", progress: 100 }).eq("id", audit.id);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ done: true, totalItems, processedItems: totalItems, batchProcessed: 0, findingsCreatedThisBatch: [] }),
-    };
+    return json(200, { done: true, totalItems, processedItems: totalItems, batchProcessed: 0, findingsCreatedThisBatch: [] });
   }
 
   const { data: releaseBriefs, error: briefsError } = await supabase
@@ -96,7 +91,7 @@ export const handler: Handler = async (event) => {
     .eq("audit_id", body.audit_id)
     .returns<Pick<ReleaseBrief, "content_text">[]>();
   if (briefsError) {
-    return { statusCode: 500, body: JSON.stringify({ error: briefsError.message }) };
+    return json(500, { error: briefsError.message });
   }
 
   const releaseContext = buildReleaseContext(audit, releaseBriefs ?? []);
@@ -155,7 +150,7 @@ export const handler: Handler = async (event) => {
   if (findingsToInsert.length > 0) {
     const { data, error } = await supabase.from("findings").insert(findingsToInsert).select();
     if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      return json(500, { error: error.message });
     }
     insertedFindings = data ?? [];
   }
@@ -166,7 +161,7 @@ export const handler: Handler = async (event) => {
     .update({ processed: true })
     .in("id", processedIds);
   if (markProcessedError) {
-    return { statusCode: 500, body: JSON.stringify({ error: markProcessedError.message }) };
+    return json(500, { error: markProcessedError.message });
   }
 
   const { count: processedCount, error: processedCountError } = await supabase
@@ -175,7 +170,7 @@ export const handler: Handler = async (event) => {
     .eq("audit_id", body.audit_id)
     .eq("processed", true);
   if (processedCountError) {
-    return { statusCode: 500, body: JSON.stringify({ error: processedCountError.message }) };
+    return json(500, { error: processedCountError.message });
   }
 
   const processedItems = processedCount ?? 0;
@@ -187,14 +182,11 @@ export const handler: Handler = async (event) => {
     .update({ status: done ? "complete" : "running", progress: done ? 100 : progress })
     .eq("id", audit.id);
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      done,
-      totalItems,
-      processedItems,
-      batchProcessed: batch.length,
-      findingsCreatedThisBatch: insertedFindings,
-    }),
-  };
+  return json(200, {
+    done,
+    totalItems,
+    processedItems,
+    batchProcessed: batch.length,
+    findingsCreatedThisBatch: insertedFindings,
+  });
 };

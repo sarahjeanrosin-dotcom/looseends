@@ -6,6 +6,7 @@
 // completes to attach it to the audit.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 
 const BUCKET = "release-briefs";
 
@@ -23,13 +24,13 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
   if (!body.file_name) {
-    return { statusCode: 400, body: JSON.stringify({ error: "file_name is required" }) };
+    return json(400, { error: "file_name is required" });
   }
 
   const { data: audit, error: auditError } = await supabase
@@ -38,10 +39,10 @@ export const handler: Handler = async (event) => {
     .eq("id", body.audit_id)
     .maybeSingle();
   if (auditError) {
-    return { statusCode: 500, body: JSON.stringify({ error: auditError.message }) };
+    return json(500, { error: auditError.message });
   }
   if (!audit) {
-    return { statusCode: 404, body: JSON.stringify({ error: `No audit found with id ${body.audit_id}` }) };
+    return json(404, { error: `No audit found with id ${body.audit_id}` });
   }
 
   const safeFileName = body.file_name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -49,11 +50,8 @@ export const handler: Handler = async (event) => {
 
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ path: data.path, signedUrl: data.signedUrl, token: data.token }),
-  };
+  return json(200, { path: data.path, signedUrl: data.signedUrl, token: data.token });
 };

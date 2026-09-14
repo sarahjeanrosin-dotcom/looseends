@@ -7,6 +7,7 @@
 // called once per file rather than replacing a single value.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
+import { json } from "./_http";
 
 interface RequestBody {
   audit_id?: string;
@@ -24,16 +25,16 @@ export const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+    return json(400, { error: "Invalid JSON body" });
   }
   if (!body.audit_id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "audit_id is required" }) };
+    return json(400, { error: "audit_id is required" });
   }
   if (!body.path) {
-    return { statusCode: 400, body: JSON.stringify({ error: "path is required" }) };
+    return json(400, { error: "path is required" });
   }
   if (!body.file_name) {
-    return { statusCode: 400, body: JSON.stringify({ error: "file_name is required" }) };
+    return json(400, { error: "file_name is required" });
   }
 
   const { data, error } = await supabase
@@ -47,8 +48,8 @@ export const handler: Handler = async (event) => {
     .select()
     .single();
   if (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    return json(500, { error: error.message });
   }
 
-  return { statusCode: 201, body: JSON.stringify({ releaseBrief: data }) };
+  return json(201, { releaseBrief: data });
 };
