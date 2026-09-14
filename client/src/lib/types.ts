@@ -9,6 +9,7 @@ export interface Audit {
   release_name: string;
   description: string | null;
   brief_file_path: string | null;
+  brief_content_text: string | null;
   created_at: string;
   status: AuditStatus;
   progress: number;
@@ -19,10 +20,12 @@ export type FindingSource = "website" | "sharepoint";
 export interface Finding {
   id: string;
   audit_id: string;
+  content_item_id: string | null;
   source: FindingSource;
   url_or_path: string;
   title: string;
   relevant: boolean;
+  borderline: boolean;
   reason: string | null;
   suggested_action: string | null;
   lift_score: number | null;
@@ -40,6 +43,7 @@ export interface ContentItem {
   title: string;
   content_text: string;
   extractable: boolean;
+  processed: boolean;
   created_at: string;
 }
 

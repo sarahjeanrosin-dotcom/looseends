@@ -81,12 +81,24 @@ plus a preview of each page's extracted title/content. The deployed `crawl-websi
 more conservative defaults (10 pages, 200ms delay) to stay inside Netlify's synchronous function
 time limit — for a fuller crawl during development, use this CLI script instead.
 
+### Testing the AI relevance pass standalone
+
+```bash
+npm run audit:test -- <auditId> --limit=10 --concurrency=3
+```
+
+Runs the real matching logic against a real audit's content items using the real Anthropic API —
+but as a **dry run** (nothing is written to the database), so you can iterate on prompt quality
+without disturbing real audit state. Needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
+`ANTHROPIC_API_KEY` in your local `.env`. To actually run an audit (persisting findings), use the
+deployed `run-audit-pass` function instead — call it repeatedly until it returns `done: true`.
+
 ## Status
 
 - [x] Stage 0 — scaffolding, Supabase schema, function stubs
 - [x] Stage 1 — manual SharePoint content input
 - [x] Stage 2 — website crawler
-- [ ] Stage 3 — release brief ingestion + AI relevance pass
+- [x] Stage 3 — release brief ingestion + AI relevance pass
 - [ ] Stage 4 — frontend: run a new audit + view results
 - [ ] Stage 5 — CSV export
 - [ ] Stage 6 — historic audits + password protection

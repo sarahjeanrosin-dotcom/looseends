@@ -9,6 +9,8 @@ export interface Audit {
   release_name: string;
   description: string | null;
   brief_file_path: string | null;
+  /** Extracted text of the uploaded product brief (Stage 3). */
+  brief_content_text: string | null;
   created_at: string;
   status: AuditStatus;
   progress: number;
@@ -25,6 +27,8 @@ export interface ContentItem {
   title: string;
   content_text: string;
   extractable: boolean;
+  /** Set once the Stage 3 AI pass has evaluated this item (regardless of verdict). */
+  processed: boolean;
   created_at: string;
 }
 
@@ -44,10 +48,14 @@ export type FindingSource = "website" | "sharepoint";
 export interface Finding {
   id: string;
   audit_id: string;
+  /** The content_items row this finding was generated from, when known. */
+  content_item_id: string | null;
   source: FindingSource;
   url_or_path: string;
   title: string;
   relevant: boolean;
+  /** relevant=false but not high-confidence — kept for human review per Stage 3 step 4. */
+  borderline: boolean;
   reason: string | null;
   suggested_action: string | null;
   lift_score: number | null; // 1-5

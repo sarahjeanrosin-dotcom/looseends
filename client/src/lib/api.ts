@@ -29,3 +29,42 @@ export function getAudit(
 ): Promise<{ audit: Audit; findings: Finding[]; contentItems: ContentItem[] }> {
   return request(`/.netlify/functions/get-audit?id=${encodeURIComponent(id)}`);
 }
+
+export function createBriefUploadUrl(
+  auditId: string,
+  fileName: string
+): Promise<{ path: string; signedUrl: string; token: string }> {
+  return request("/.netlify/functions/create-brief-upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audit_id: auditId, file_name: fileName }),
+  });
+}
+
+export function finalizeReleaseBrief(
+  auditId: string,
+  path: string,
+  contentText: string
+): Promise<{ audit: Audit }> {
+  return request("/.netlify/functions/finalize-release-brief", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audit_id: auditId, path, content_text: contentText }),
+  });
+}
+
+export interface RunAuditPassResult {
+  done: boolean;
+  totalItems: number;
+  processedItems: number;
+  batchProcessed: number;
+  findingsCreatedThisBatch: Finding[];
+}
+
+export function runAuditPassChunk(auditId: string): Promise<RunAuditPassResult> {
+  return request("/.netlify/functions/run-audit-pass", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audit_id: auditId }),
+  });
+}
