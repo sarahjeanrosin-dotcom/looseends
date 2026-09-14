@@ -98,7 +98,7 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
   return (
     <div className="page">
       <button type="button" className="page__back" onClick={onBack}>
-        ← New audit
+        ← Past Audits
       </button>
 
       {loadError && <p className="app__error">{loadError}</p>}

@@ -41,7 +41,31 @@
   word-break: break-all;
 }
 
-/* Page layout (New Audit / Audit Results) */
+/* Top nav */
+
+.topnav {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.topnav button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.topnav button.is-active {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* Page layout (New Audit / Audit Results / Past Audits) */
 
 .page {
   padding-bottom: 3rem;
@@ -160,4 +184,35 @@
   margin-top: 2rem;
   padding-top: 1rem;
   border-top: 1px dashed var(--border);
+}
+
+/* Past Audits */
+
+.past-audits__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lift-counts {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.lift-counts__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0 0.3rem;
 }

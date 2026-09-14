@@ -7,7 +7,7 @@
 // only signal: every badge always shows the number and label as text, which
 // is the documented exception for this case. Fill shades are chosen dark
 // enough for white text to clear WCAG AA (4.5:1) at every step, in both themes.
-const LIFT_COLORS: Record<number, string> = {
+export const LIFT_COLORS: Record<number, string> = {
   1: "#15803d", // green
   2: "#4d7c0f", // olive/lime
   3: "#a16207", // amber
@@ -25,6 +25,28 @@ export function LiftBadge({ score, label }: LiftBadgeProps) {
   return (
     <span className="lift-badge" style={{ backgroundColor: color }}>
       {score}/5 {label}
+    </span>
+  );
+}
+
+/** Compact per-lift-level count chips for the Past Audits list. */
+export function LiftCountsSummary({ counts }: { counts: Record<1 | 2 | 3 | 4 | 5, number> }) {
+  const levels = ([1, 2, 3, 4, 5] as const).filter((n) => counts[n] > 0);
+  if (levels.length === 0) {
+    return <span className="app__saved-meta">No findings yet</span>;
+  }
+  return (
+    <span className="lift-counts">
+      {levels.map((n) => (
+        <span
+          key={n}
+          className="lift-counts__chip"
+          style={{ backgroundColor: LIFT_COLORS[n] }}
+          title={`Lift ${n}: ${counts[n]} item${counts[n] === 1 ? "" : "s"}`}
+        >
+          {counts[n]}
+        </span>
+      ))}
     </span>
   );
 }

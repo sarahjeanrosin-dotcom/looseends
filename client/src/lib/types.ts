@@ -15,6 +15,13 @@ export interface Audit {
   progress: number;
 }
 
+export type LiftCounts = Record<1 | 2 | 3 | 4 | 5, number>;
+
+/** An audit row plus a breakdown of its relevant findings by lift score, as returned by list-audits. */
+export interface AuditWithLiftCounts extends Audit {
+  liftCounts: LiftCounts;
+}
+
 export type FindingSource = "website" | "sharepoint";
 
 export interface Finding {

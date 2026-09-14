@@ -1,17 +1,27 @@
 // Thin fetch wrappers around the Netlify Functions API, shared by the New
 // Audit and Audit Results screens.
-import type { Audit, ContentItem, Finding, ReleaseBrief } from "./types";
+import type { Audit, AuditWithLiftCounts, ContentItem, Finding, ReleaseBrief } from "./types";
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
-  const body = await res.json().catch(() => ({}));
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  if (!isJson) {
+    // Most commonly hit locally: `vite` alone (no `netlify dev`) has no
+    // functions to serve, and falls back to index.html (200, text/html) for
+    // any unmatched path — silently parsing that as `{}` would let callers
+    // destructure `undefined` out of it instead of getting a clear error.
+    throw new Error(
+      `Request to ${input} did not return JSON (HTTP ${res.status}) — is the Netlify Functions backend running?`
+    );
+  }
+  const body = await res.json();
   if (!res.ok) {
     throw new Error(body.error ?? `Request to ${input} failed with status ${res.status}`);
   }
   return body as T;
 }
 
-export function listAudits(): Promise<{ audits: Audit[] }> {
+export function listAudits(): Promise<{ audits: AuditWithLiftCounts[] }> {
   return request("/.netlify/functions/list-audits");
 }
 

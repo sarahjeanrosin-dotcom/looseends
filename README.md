@@ -14,8 +14,8 @@ Netlify with password protection for single-user access.
 /supabase/migrations    — SQL migration files for the schema
 ```
 
-This is being built in stages (see `release-impact-finder-cc-prompts.md`). This is **Stage 0**:
-scaffolding, schema, and function stubs only — no crawling, uploads, or AI logic yet.
+This was built in stages (see `release-impact-finder-cc-prompts.md` and the Status section below) —
+all six are now complete.
 
 ## Setup
 
@@ -27,8 +27,8 @@ scaffolding, schema, and function stubs only — no crawling, uploads, or AI log
 3. Once it's provisioned, go to **Project Settings → API** and copy:
    - **Project URL** → `SUPABASE_URL`
    - **service_role secret** (not the `anon` key) → `SUPABASE_SERVICE_ROLE_KEY`
-4. Copy `.env.example` to `.env` and fill in those two values (plus `ANTHROPIC_API_KEY` and
-   `SITE_PASSWORD` when you get to Stage 3 / Stage 6).
+4. Copy `.env.example` to `.env` and fill in those two values (plus `ANTHROPIC_API_KEY` for the
+   Stage 3 AI pass).
 
 ### 2. Run the migrations
 
@@ -51,9 +51,11 @@ content produced by Stage 1 and Stage 2 before the AI pass (Stage 3) turns it in
    - Publish directory: `client/dist`
    - Functions directory: `netlify/functions`
 4. Under **Site configuration → Environment variables**, add `SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `SITE_PASSWORD`, and optionally
-   `WEBSITE_SITEMAP_URL` (same values as your local `.env`).
+   `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and optionally `WEBSITE_SITEMAP_URL` (same
+   values as your local `.env`).
 5. Deploy.
+6. See **Password protection** below to gate the site — this project uses Netlify's built-in
+   Visitor Access rather than the app-level `SITE_PASSWORD` gate, so no extra env var is needed for it.
 
 ### Local development
 
@@ -93,6 +95,23 @@ without disturbing real audit state. Needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROL
 `ANTHROPIC_API_KEY` in your local `.env`. To actually run an audit (persisting findings), use the
 deployed `run-audit-pass` function instead — call it repeatedly until it returns `done: true`.
 
+## Password protection
+
+This site is on a Netlify **Pro** plan, so it uses Netlify's built-in Visitor Access rather than a
+custom login screen (the app-level `SITE_PASSWORD` fallback the original spec described for
+plans without that feature). To enable it:
+
+1. Netlify dashboard → this site → **Project configuration → General → Visitor access → Project
+   visibility** (older Netlify UIs label this **Site settings → Visitor access → Password
+   protection**, since Netlify's product terminology has shifted from "site" to "project").
+2. **Edit visibility** → select **Password** → enter a password.
+3. Scope: choose **Production and previews** so the live site itself is gated, not just deploy
+   previews.
+4. **Save.**
+
+That's it — no code, no deploy needed. Netlify prompts every visitor for that password before
+serving any page. Rotate it any time from the same screen.
+
 ## Status
 
 - [x] Stage 0 — scaffolding, Supabase schema, function stubs
@@ -101,4 +120,4 @@ deployed `run-audit-pass` function instead — call it repeatedly until it retur
 - [x] Stage 3 — release brief ingestion + AI relevance pass
 - [x] Stage 4 — frontend: run a new audit + view results
 - [x] Stage 5 — CSV export
-- [ ] Stage 6 — historic audits + password protection
+- [x] Stage 6 — historic audits + password protection
