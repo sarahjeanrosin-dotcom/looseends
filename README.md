@@ -51,8 +51,8 @@ content produced by Stage 1 and Stage 2 before the AI pass (Stage 3) turns it in
    - Publish directory: `client/dist`
    - Functions directory: `netlify/functions`
 4. Under **Site configuration → Environment variables**, add `SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and `SITE_PASSWORD` (same values as your
-   local `.env`).
+   `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `SITE_PASSWORD`, and optionally
+   `WEBSITE_SITEMAP_URL` (same values as your local `.env`).
 5. Deploy.
 
 ### Local development
@@ -67,11 +67,25 @@ npx netlify-cli dev          # runs the Vite client + Netlify Functions together
 `netlify dev` reads `.env` automatically and proxies `/api/*` to the functions (see the redirect
 in `netlify.toml`), and serves the Vite client with hot reload.
 
+### Testing the website crawler standalone
+
+Before relying on the deployed `crawl-website` function, you can run the crawler directly against
+a real sitemap with no timeout and no database writes:
+
+```bash
+npm run crawl:test -- https://www.getgenea.com/sitemap.xml --max=20 --delay=300
+```
+
+Prints a summary (URLs discovered, pages crawled, skipped non-HTML resources, any fetch failures)
+plus a preview of each page's extracted title/content. The deployed `crawl-website` function uses
+more conservative defaults (10 pages, 200ms delay) to stay inside Netlify's synchronous function
+time limit — for a fuller crawl during development, use this CLI script instead.
+
 ## Status
 
 - [x] Stage 0 — scaffolding, Supabase schema, function stubs
 - [x] Stage 1 — manual SharePoint content input
-- [ ] Stage 2 — website crawler
+- [x] Stage 2 — website crawler
 - [ ] Stage 3 — release brief ingestion + AI relevance pass
 - [ ] Stage 4 — frontend: run a new audit + view results
 - [ ] Stage 5 — CSV export
