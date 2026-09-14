@@ -41,7 +41,16 @@ async function main() {
     process.exit(1);
   }
 
-  const releaseContext = buildReleaseContext(audit);
+  const { data: releaseBriefs, error: briefsError } = await supabase
+    .from("release_briefs")
+    .select("content_text")
+    .eq("audit_id", auditId);
+  if (briefsError) {
+    console.error("Could not load release briefs:", briefsError.message);
+    process.exit(1);
+  }
+
+  const releaseContext = buildReleaseContext(audit, releaseBriefs ?? []);
   console.log("--- Release context ---");
   console.log(releaseContext);
   console.log();

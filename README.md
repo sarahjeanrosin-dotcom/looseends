@@ -99,6 +99,6 @@ deployed `run-audit-pass` function instead — call it repeatedly until it retur
 - [x] Stage 1 — manual SharePoint content input
 - [x] Stage 2 — website crawler
 - [x] Stage 3 — release brief ingestion + AI relevance pass
-- [ ] Stage 4 — frontend: run a new audit + view results
+- [x] Stage 4 — frontend: run a new audit + view results
 - [ ] Stage 5 — CSV export
 - [ ] Stage 6 — historic audits + password protection

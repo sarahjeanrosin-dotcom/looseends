@@ -12,7 +12,7 @@ import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
 import { anthropic } from "./_anthropic";
 import { buildReleaseContext, evaluateBatch, DEFAULT_MODEL } from "./_matcher";
-import type { Audit, ContentItem, Finding } from "./_types";
+import type { Audit, ContentItem, Finding, ReleaseBrief } from "./_types";
 
 const DEFAULT_BATCH_SIZE = 6;
 const DEFAULT_CONCURRENCY = 3;
@@ -90,7 +90,16 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const releaseContext = buildReleaseContext(audit);
+  const { data: releaseBriefs, error: briefsError } = await supabase
+    .from("release_briefs")
+    .select("content_text")
+    .eq("audit_id", body.audit_id)
+    .returns<Pick<ReleaseBrief, "content_text">[]>();
+  if (briefsError) {
+    return { statusCode: 500, body: JSON.stringify({ error: briefsError.message }) };
+  }
+
+  const releaseContext = buildReleaseContext(audit, releaseBriefs ?? []);
   const results = await evaluateBatch(anthropic, releaseContext, batch, {
     concurrency: body.concurrency ?? DEFAULT_CONCURRENCY,
     model: body.model ?? DEFAULT_MODEL,

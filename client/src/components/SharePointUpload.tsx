@@ -13,11 +13,12 @@ function stripExtension(fileName: string): string {
 }
 
 interface SharePointUploadProps {
-  auditId: string;
+  /** Resolves the audit id to save against, creating the audit on first call if needed. */
+  getAuditId: () => Promise<string>;
   onSaved: (items: ContentItem[]) => void;
 }
 
-export function SharePointUpload({ auditId, onSaved }: SharePointUploadProps) {
+export function SharePointUpload({ getAuditId, onSaved }: SharePointUploadProps) {
   const [items, setItems] = useState<StagedSharePointItem[]>([]);
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteText, setPasteText] = useState("");
@@ -112,6 +113,7 @@ export function SharePointUpload({ auditId, onSaved }: SharePointUploadProps) {
 
     setIsSaving(true);
     try {
+      const auditId = await getAuditId();
       const res = await fetch("/.netlify/functions/add-content-items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

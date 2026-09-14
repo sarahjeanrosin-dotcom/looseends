@@ -32,6 +32,16 @@ export interface Finding {
   lift_label: string | null;
 }
 
+/** A row in `release_briefs` — one uploaded product brief / release doc file. */
+export interface ReleaseBrief {
+  id: string;
+  audit_id: string;
+  file_path: string;
+  file_name: string;
+  content_text: string;
+  created_at: string;
+}
+
 export type ContentItemSource = "website" | "sharepoint";
 
 /** A saved row from the `content_items` table, as returned by the API. */

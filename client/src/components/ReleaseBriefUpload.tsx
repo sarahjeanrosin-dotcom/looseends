@@ -1,32 +1,40 @@
 import { useRef, useState } from "react";
 import { createBriefUploadUrl, finalizeReleaseBrief } from "../lib/api";
-import type { Audit } from "../lib/types";
+import type { ReleaseBrief } from "../lib/types";
 
-type Status = "idle" | "extracting" | "uploading" | "done" | "error";
+const ACCEPTED_EXTENSIONS = [".docx", ".pdf", ".pptx", ".txt"];
 
-interface ReleaseBriefUploadProps {
-  auditId: string;
-  audit: Audit;
-  onUploaded: (audit: Audit) => void;
+interface UploadingFile {
+  id: string;
+  fileName: string;
+  status: "extracting" | "uploading" | "error";
+  error?: string;
 }
 
-export function ReleaseBriefUpload({ auditId, audit, onUploaded }: ReleaseBriefUploadProps) {
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+interface ReleaseBriefUploadProps {
+  /** Resolves the audit id to attach briefs to, creating the audit on first call if needed. */
+  getAuditId: () => Promise<string>;
+  briefs: ReleaseBrief[];
+  onUploaded: (brief: ReleaseBrief) => void;
+}
+
+export function ReleaseBriefUpload({ getAuditId, briefs, onUploaded }: ReleaseBriefUploadProps) {
+  const [uploading, setUploading] = useState<UploadingFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(file: File) {
-    setError(null);
-    setFileName(file.name);
+  async function uploadOne(file: File) {
+    const id = crypto.randomUUID();
+    setUploading((prev) => [...prev, { id, fileName: file.name, status: "extracting" }]);
+
     try {
-      setStatus("extracting");
       // Lazy-loaded, same as SharePointUpload — mammoth/jszip/pdfjs only
       // needed once someone actually uploads a file.
       const { extractFile } = await import("../lib/extract");
       const extracted = await extractFile(file);
 
-      setStatus("uploading");
+      setUploading((prev) => prev.map((u) => (u.id === id ? { ...u, status: "uploading" } : u)));
+
+      const auditId = await getAuditId();
       const { path, signedUrl } = await createBriefUploadUrl(auditId, file.name);
       const putRes = await fetch(signedUrl, {
         method: "PUT",
@@ -37,44 +45,52 @@ export function ReleaseBriefUpload({ auditId, audit, onUploaded }: ReleaseBriefU
         throw new Error(`Uploading the file to storage failed (HTTP ${putRes.status})`);
       }
 
-      const { audit: updated } = await finalizeReleaseBrief(auditId, path, extracted.contentText);
-      setStatus("done");
-      onUploaded(updated);
+      const { releaseBrief } = await finalizeReleaseBrief(auditId, path, file.name, extracted.contentText);
+      onUploaded(releaseBrief);
+      setUploading((prev) => prev.filter((u) => u.id !== id));
     } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : String(err));
+      setUploading((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, status: "error", error: err instanceof Error ? err.message : String(err) } : u))
+      );
     }
   }
 
   function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (file) handleFile(file);
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => uploadOne(file));
+    }
     event.target.value = "";
   }
 
-  const hasBrief = !!audit.brief_file_path;
-
   return (
     <div>
-      {hasBrief && status !== "extracting" && status !== "uploading" && (
-        <p className="app__subtitle">
-          Current brief: {audit.brief_file_path?.split("/").pop()}
-          {audit.brief_content_text ? ` (${audit.brief_content_text.length} chars extracted)` : " (no text extracted)"}
-        </p>
+      {briefs.length > 0 && (
+        <ul className="app__saved-list">
+          {briefs.map((b) => (
+            <li key={b.id}>
+              <strong>{b.file_name}</strong>{" "}
+              <span className="app__saved-meta">({b.content_text.length} chars extracted)</span>
+            </li>
+          ))}
+        </ul>
       )}
+      {uploading.map((u) => (
+        <p key={u.id} className={u.status === "error" ? "app__error" : "app__subtitle"}>
+          {u.fileName}: {u.status === "extracting" ? "Extracting…" : u.status === "uploading" ? "Uploading…" : `Error — ${u.error}`}
+        </p>
+      ))}
       <input
         ref={fileInputRef}
         type="file"
-        accept=".docx,.pdf,.pptx,.txt"
+        multiple
+        accept={ACCEPTED_EXTENSIONS.join(",")}
         onChange={handleFileInputChange}
         style={{ display: "none" }}
       />
-      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={status === "extracting" || status === "uploading"}>
-        {status === "extracting" && `Extracting ${fileName}…`}
-        {status === "uploading" && `Uploading ${fileName}…`}
-        {(status === "idle" || status === "done" || status === "error") && (hasBrief ? "Replace product brief" : "Upload product brief")}
+      <button type="button" onClick={() => fileInputRef.current?.click()}>
+        Upload product brief / release docs
       </button>
-      {error && <p className="app__error">{error}</p>}
     </div>
   );
 }

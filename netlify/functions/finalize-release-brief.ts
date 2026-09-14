@@ -1,14 +1,17 @@
 // POST /.netlify/functions/finalize-release-brief
-// Step 2 of 2 for the release brief upload: called after the client has PUT
-// the file to the signed URL from create-brief-upload-url. Records the
+// Step 2 of 2 for a release brief file upload: called after the client has
+// PUT the file to the signed URL from create-brief-upload-url. Records the
 // Storage path and the extracted text (extracted client-side, same as the
-// Stage 1 SharePoint upload) against the audit.
+// Stage 1 SharePoint upload) as a new release_briefs row — the New Audit
+// screen allows multiple brief/release doc files per audit, so this can be
+// called once per file rather than replacing a single value.
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
 
 interface RequestBody {
   audit_id?: string;
   path?: string;
+  file_name?: string;
   content_text?: string;
 }
 
@@ -29,16 +32,23 @@ export const handler: Handler = async (event) => {
   if (!body.path) {
     return { statusCode: 400, body: JSON.stringify({ error: "path is required" }) };
   }
+  if (!body.file_name) {
+    return { statusCode: 400, body: JSON.stringify({ error: "file_name is required" }) };
+  }
 
   const { data, error } = await supabase
-    .from("audits")
-    .update({ brief_file_path: body.path, brief_content_text: body.content_text ?? null })
-    .eq("id", body.audit_id)
+    .from("release_briefs")
+    .insert({
+      audit_id: body.audit_id,
+      file_path: body.path,
+      file_name: body.file_name,
+      content_text: body.content_text ?? "",
+    })
     .select()
     .single();
   if (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 
-  return { statusCode: 200, body: JSON.stringify({ audit: data }) };
+  return { statusCode: 201, body: JSON.stringify({ releaseBrief: data }) };
 };

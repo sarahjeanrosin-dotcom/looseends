@@ -8,12 +8,23 @@ export interface Audit {
   id: string;
   release_name: string;
   description: string | null;
+  /** @deprecated superseded by the release_briefs table (Stage 4) */
   brief_file_path: string | null;
-  /** Extracted text of the uploaded product brief (Stage 3). */
+  /** @deprecated superseded by the release_briefs table (Stage 4) */
   brief_content_text: string | null;
   created_at: string;
   status: AuditStatus;
   progress: number;
+}
+
+/** A row in `release_briefs` — one uploaded product brief / release doc file. */
+export interface ReleaseBrief {
+  id: string;
+  audit_id: string;
+  file_path: string;
+  file_name: string;
+  content_text: string;
+  created_at: string;
 }
 
 export type ContentItemSource = "website" | "sharepoint";

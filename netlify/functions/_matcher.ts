@@ -5,7 +5,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type { Audit, ContentItem } from "./_types";
+import type { Audit, ContentItem, ReleaseBrief } from "./_types";
 
 // Named explicitly per the spec rather than defaulting to the newest model —
 // this is a bulk classification workload (many small calls), and Sonnet 4.6
@@ -54,14 +54,25 @@ function truncate(text: string, maxChars: number): string {
 const RELEASE_CONTEXT_MAX_CHARS = 6000;
 const CONTENT_EXCERPT_MAX_CHARS = 4000;
 
-/** Combines release name + description + brief content into one context string. */
-export function buildReleaseContext(audit: Pick<Audit, "release_name" | "description" | "brief_content_text">): string {
+/**
+ * Combines release name + description + brief content(s) into one context
+ * string. `releaseBriefs` supports the Stage 4 New Audit screen allowing
+ * multiple brief/release doc files — their text is concatenated.
+ */
+export function buildReleaseContext(
+  audit: Pick<Audit, "release_name" | "description">,
+  releaseBriefs: Pick<ReleaseBrief, "content_text">[] = []
+): string {
   const parts = [`Release name: ${audit.release_name}`];
   if (audit.description?.trim()) {
     parts.push(`Description: ${audit.description.trim()}`);
   }
-  if (audit.brief_content_text?.trim()) {
-    parts.push(`Product brief content:\n${truncate(audit.brief_content_text, RELEASE_CONTEXT_MAX_CHARS)}`);
+  const briefText = releaseBriefs
+    .map((b) => b.content_text?.trim())
+    .filter((text): text is string => !!text)
+    .join("\n\n---\n\n");
+  if (briefText) {
+    parts.push(`Product brief content:\n${truncate(briefText, RELEASE_CONTEXT_MAX_CHARS)}`);
   }
   return parts.join("\n\n");
 }

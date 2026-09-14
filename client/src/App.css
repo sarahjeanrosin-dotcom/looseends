@@ -16,23 +16,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.app__audit-picker select {
-  padding: 0.4rem;
-  min-width: 320px;
-  margin-bottom: 0.75rem;
-}
-
-.app__audit-create {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.app__audit-create input {
-  flex: 1;
-  padding: 0.4rem;
-  max-width: 320px;
-}
-
 .app__saved-list {
   list-style: none;
   padding: 0;
@@ -56,4 +39,125 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   word-break: break-all;
+}
+
+/* Page layout (New Audit / Audit Results) */
+
+.page {
+  padding-bottom: 3rem;
+}
+
+.page__back {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.page__field {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.page__field input,
+.page__field textarea {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 0.35rem;
+  padding: 0.5rem;
+  font: inherit;
+  font-weight: normal;
+  box-sizing: border-box;
+}
+
+/* Lift badge */
+
+.lift-badge {
+  display: inline-block;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Findings table */
+
+.findings-table__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.findings-table__tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.findings-table__tabs button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.findings-table__tabs button.is-active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.findings-table__filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.findings-table__filters select {
+  padding: 0.25rem;
+}
+
+.findings-table__csv {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.findings-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.findings-table__table th,
+.findings-table__table td {
+  text-align: left;
+  padding: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.findings-table__sort {
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.findings-table__borderline {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
 }
