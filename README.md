@@ -30,10 +30,13 @@ scaffolding, schema, and function stubs only — no crawling, uploads, or AI log
 4. Copy `.env.example` to `.env` and fill in those two values (plus `ANTHROPIC_API_KEY` and
    `SITE_PASSWORD` when you get to Stage 3 / Stage 6).
 
-### 2. Run the migration
+### 2. Run the migrations
 
-In the Supabase dashboard: **SQL Editor → New query**, paste the contents of
-`supabase/migrations/0001_init.sql`, and run it. This creates the `audits` and `findings` tables.
+In the Supabase dashboard: **SQL Editor → New query**, paste the contents of each file in
+`supabase/migrations/` **in order** (`0001_init.sql`, then `0002_content_items.sql`, etc. as new
+ones are added), running each one. `0001_init.sql` creates `audits` and `findings`;
+`0002_content_items.sql` adds `content_items`, which holds the normalized SharePoint/website
+content produced by Stage 1 and Stage 2 before the AI pass (Stage 3) turns it into findings.
 
 (If you'd rather use the Supabase CLI: `supabase link --project-ref <your-project-ref>` then
 `supabase db push` from the repo root, with the CLI installed and logged in.)
@@ -67,7 +70,7 @@ in `netlify.toml`), and serves the Vite client with hot reload.
 ## Status
 
 - [x] Stage 0 — scaffolding, Supabase schema, function stubs
-- [ ] Stage 1 — manual SharePoint content input
+- [x] Stage 1 — manual SharePoint content input
 - [ ] Stage 2 — website crawler
 - [ ] Stage 3 — release brief ingestion + AI relevance pass
 - [ ] Stage 4 — frontend: run a new audit + view results

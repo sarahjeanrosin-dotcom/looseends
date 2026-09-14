@@ -15,11 +15,15 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "id query param is required" }) };
   }
 
-  const [{ data: audit, error: auditError }, { data: findings, error: findingsError }] =
-    await Promise.all([
-      supabase.from("audits").select("*").eq("id", id).single(),
-      supabase.from("findings").select("*").eq("audit_id", id),
-    ]);
+  const [
+    { data: audit, error: auditError },
+    { data: findings, error: findingsError },
+    { data: contentItems, error: contentItemsError },
+  ] = await Promise.all([
+    supabase.from("audits").select("*").eq("id", id).single(),
+    supabase.from("findings").select("*").eq("audit_id", id),
+    supabase.from("content_items").select("*").eq("audit_id", id),
+  ]);
 
   if (auditError) {
     return { statusCode: 404, body: JSON.stringify({ error: auditError.message }) };
@@ -27,6 +31,9 @@ export const handler: Handler = async (event) => {
   if (findingsError) {
     return { statusCode: 500, body: JSON.stringify({ error: findingsError.message }) };
   }
+  if (contentItemsError) {
+    return { statusCode: 500, body: JSON.stringify({ error: contentItemsError.message }) };
+  }
 
-  return { statusCode: 200, body: JSON.stringify({ audit, findings }) };
+  return { statusCode: 200, body: JSON.stringify({ audit, findings, contentItems }) };
 };
