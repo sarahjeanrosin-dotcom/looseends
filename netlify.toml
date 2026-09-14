@@ -6,6 +6,12 @@
 
 [functions]
   node_bundler = "esbuild"
+  # jsdom (used by the Stage 2 crawler for Readability-based content
+  # extraction) reads a physical CSS file from its own package directory at
+  # runtime. Bundled into a single file by esbuild, that file doesn't ship
+  # with the function and jsdom fails with ENOENT at runtime. Leaving it
+  # external keeps its real node_modules directory structure intact.
+  external_node_modules = ["jsdom"]
 
 [[redirects]]
   from = "/api/*"
