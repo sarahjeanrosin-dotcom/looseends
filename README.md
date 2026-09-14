@@ -112,6 +112,33 @@ plans without that feature). To enable it:
 That's it — no code, no deploy needed. Netlify prompts every visitor for that password before
 serving any page. Rotate it any time from the same screen.
 
+## Getting SharePoint content into an audit
+
+Two ways to get SharePoint content into `content_items` — same endpoint (`add-content-items`)
+either way, so nothing downstream (the AI pass, the Results screen) knows or cares which one you used:
+
+**1. Upload it yourself** — the SharePoint upload widget on the New Audit screen (Stage 1).
+Drag in files you've already pulled, or paste text directly, with an optional reference URL per
+item. Always available, no live Claude session required.
+
+**2. Ask Claude to pull it live** — in a Claude Code session with the Microsoft 365 connector
+(this repo's sessions have it), just ask, e.g. *"Pull SharePoint content from the Marketing site
+for the Web Provisioning audit — it's about wallet-based mobile credential provisioning."* Claude
+searches the Marketing SharePoint site (`genea.sharepoint.com/sites/Marketing`) with
+`sharepoint_search`/`sharepoint_folder_search`, reads matches with `read_resource`, and pushes the
+relevant ones straight into the audit via `add-content-items` — no separate chat, no manual
+export/upload round-trip. Give it the audit name (or id) and a topic/keywords; it works best
+scoped to one release rather than "pull everything," since the Marketing site has hundreds of
+files.
+
+This mirrors `contentcrawl`'s approach (a sibling project — a broader quarterly content-quality
+audit, kept separate on purpose; see conversation history for the comparison): neither project
+does *live, unattended* SharePoint search from the deployed app itself. That would need an Azure
+AD app registration with Graph API permissions and admin consent — real infrastructure, not
+something either app is built for. What both actually do is have Claude pull SharePoint content
+by hand, live, during a session that already has the Microsoft 365 connector — this app just
+skips contentcrawl's extra step of caching that pull into a committed file first.
+
 ## Status
 
 - [x] Stage 0 — scaffolding, Supabase schema, function stubs
