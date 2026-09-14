@@ -22,6 +22,6 @@
     "@mozilla/readability": "^0.6.0",
     "@supabase/supabase-js": "^2.45.4",
     "fast-xml-parser": "^5.11.1",
-    "jsdom": "^29.1.1"
+    "jsdom": "^25.0.1"
   }
 }
