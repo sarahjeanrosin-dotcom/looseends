@@ -52,7 +52,7 @@ export interface ReleaseBrief {
 
 export type SharePointRequestStatus = "pending" | "fulfilled" | "failed";
 
-/** A queued plain-language SharePoint search request, fulfilled by a scheduled Claude agent. */
+/** A queued plain-language SharePoint search request, fulfilled on demand by the "SharePoint Request Fulfiller" agent. */
 export interface SharePointRequest {
   id: string;
   audit_id: string;

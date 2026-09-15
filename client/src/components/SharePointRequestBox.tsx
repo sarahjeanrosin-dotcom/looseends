@@ -10,7 +10,7 @@ interface SharePointRequestBoxProps {
 }
 
 const STATUS_LABEL: Record<SharePointRequest["status"], string> = {
-  pending: "Queued — a scheduled Claude agent checks periodically",
+  pending: "Queued — ask Claude to run it",
   fulfilled: "Done",
   failed: "Failed",
 };

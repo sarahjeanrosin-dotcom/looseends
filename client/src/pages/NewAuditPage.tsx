@@ -101,8 +101,8 @@ export function NewAuditPage({ onAuditReady }: NewAuditPageProps) {
       <section className="app__section">
         <h2>SharePoint content</h2>
         <p className="app__subtitle">
-          Describe what to look for in the Marketing site. A scheduled Claude agent checks for
-          requests periodically, searches, and adds what's relevant — no files to find or drag.
+          Describe what to look for in the Marketing site, then ask Claude (in a chat session) to
+          run it — searches and adds what's relevant, no files to find or drag.
         </p>
         <SharePointRequestBox
           getAuditId={ensureAuditId}

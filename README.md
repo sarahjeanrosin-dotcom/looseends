@@ -114,29 +114,36 @@ serving any page. Rotate it any time from the same screen.
 
 ## Getting SharePoint content into an audit
 
-Three ways to get SharePoint content in — all end up in the same place (`content_items` via
+Four ways to get SharePoint content in — all end up in the same place (`content_items` via
 `add-content-items`, or `release_briefs` via `finalize-release-brief`), so nothing downstream (the
 AI pass, the Results screen) knows or cares which one you used:
 
-**1. Just ask, in plain language — the normal path, and the only one the New Audit screen
-actively prompts for.** In a Claude Code session with the Microsoft 365 connector (this repo's
-sessions have it), say something like *"Pull SharePoint content from the Marketing site for the
-Web Provisioning audit — it's about wallet-based mobile credential provisioning."* Claude searches
-the Marketing SharePoint site (`genea.sharepoint.com/sites/Marketing`) with
-`sharepoint_search`/`sharepoint_folder_search`, reads matches with `read_resource`, judges what's
-an existing asset to check (→ content item) vs. the release's own product brief (→ release brief),
-and pushes it in — no upload, no manual export, no dragging individual files. Give it the audit
-name (or id) and a topic/keywords rather than "pull everything," since the Marketing site has
-hundreds of files. **Running an audit means checking both the website and SharePoint** — when
-asked to run one, search SharePoint for it as a matter of course, the same way the website crawl
-already happens automatically, rather than waiting to be asked separately.
+**1. The prompt box in the app — the normal path.** Every audit (New Audit and Results screens)
+has a "SharePoint content" box: type what to look for (e.g. *"Search Marketing for wallet-based
+mobile credential content"*) and submit — this queues a `sharepoint_requests` row, status
+`pending`. Nothing searches SharePoint automatically; **ask Claude, in a chat session, to run the
+"SharePoint Request Fulfiller" agent** (`RemoteTrigger` with `action: "run"`, trigger id
+`trig_01EaZAUWyAbWREueacknTrAj` — https://claude.ai/code/routines/trig_01EaZAUWyAbWREueacknTrAj).
+It's a scheduled-agent routine but its cron is disabled on purpose (Sarah didn't want it polling
+hourly) — it only ever runs when explicitly fired. One run: fetches every pending request across
+all audits, searches **only** `genea.sharepoint.com/sites/Marketing` (a hard constraint in its
+prompt — any result outside that site is discarded, no exceptions), reads the most relevant
+documents, classifies each as a content item or a release brief, checks for duplicates, pushes new
+ones in, and marks each request fulfilled (or failed) with a one-line summary you'll see next to
+the request in the app.
 
-**2. Upload it yourself** — a fallback for when you already have specific files in hand and don't
-want a live session. Collapsed behind "Prefer to add files by hand instead?" on the New Audit
-screen (not shown by default) — drag in files, or paste text directly, with an optional reference
-URL per item.
+**2. Just ask, in plain language, without the queue** — for when you're already in a chat session
+and don't need the app-side record. Say something like *"Pull SharePoint content from the
+Marketing site for the Web Provisioning audit — it's about wallet-based mobile credential
+provisioning"* and Claude does the same search-and-push directly, skipping the
+queue/request/fulfill round trip. Same Marketing-only scoping applies.
 
-**3. `scripts/sharepoint-crawl.ts`** — the mechanism behind #1, formalized so a live session
+**3. Upload it yourself** — a fallback for when you already have specific files in hand and don't
+want a live session at all. Collapsed behind "Prefer to add files by hand instead?" on the New
+Audit screen (not shown by default) — drag in files, or paste text directly, with an optional
+reference URL per item.
+
+**4. `scripts/sharepoint-crawl.ts`** — the mechanism behind #1/#2, formalized so a live session
 doesn't hand-write a one-off script each time. It takes a small JSON file (`{ auditId, items: [{
 kind: "content" | "brief", title, url, contentText }] }`), skips anything whose `url` already
 exists on the audit (so pushing again after finding more results is safe — verified: re-submitting
@@ -146,7 +153,7 @@ right endpoint:
 npx tsx scripts/sharepoint-crawl.ts path/to/items.json
 ```
 Claude fills in that JSON from what it finds via the connector and runs this — you never write the
-JSON or invoke the script yourself, you just ask in plain language (#2).
+JSON or invoke the script yourself.
 
 **Why not a live automated crawl with no Claude in the loop?** That would need an Azure AD app
 registration with Graph API permissions and admin consent — real infrastructure this app

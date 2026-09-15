@@ -116,8 +116,8 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
           <section className="app__section">
             <h2>SharePoint content</h2>
             <p className="app__subtitle">
-              Describe what to look for in the Marketing site. A scheduled Claude agent checks for
-              requests periodically and adds what's relevant.
+              Describe what to look for in the Marketing site, then ask Claude (in a chat session)
+              to run it.
             </p>
             <SharePointRequestBox
               getAuditId={async () => auditId}
