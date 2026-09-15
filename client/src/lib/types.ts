@@ -34,6 +34,7 @@ export interface Finding {
   relevant: boolean;
   borderline: boolean;
   reason: string | null;
+  legacy_copy: string | null;
   suggested_action: string | null;
   lift_score: number | null;
   lift_label: string | null;

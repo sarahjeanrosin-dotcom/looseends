@@ -98,6 +98,7 @@ async function main() {
     const tag = v.relevant ? `RELEVANT (lift ${v.lift_score}/5 ${v.lift_label})` : `BORDERLINE (confidence: ${v.confidence})`;
     console.log(`${v.relevant ? "✓" : "?"} ${tag}   [${item.source}] ${item.title}`);
     console.log(`    Reason: ${v.reason}`);
+    if (v.legacy_copy) console.log(`    Legacy copy: "${v.legacy_copy}"`);
     if (v.suggested_action) console.log(`    Suggested action: ${v.suggested_action}`);
     console.log();
   }

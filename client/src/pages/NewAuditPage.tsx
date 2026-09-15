@@ -99,16 +99,20 @@ export function NewAuditPage({ onAuditReady }: NewAuditPageProps) {
       <section className="app__section">
         <h2>SharePoint content</h2>
         <p className="app__subtitle">
-          Content pulled via a separate Claude chat session (Microsoft 365 connector) — drop the
-          exported files or pasted text here, with an optional reference URL per item.
+          Ask Claude, in plain language, to pull it for you — e.g. <em>"pull SharePoint content
+          for this audit about [topic]."</em> It searches the Marketing site, reads what's
+          relevant, and adds it directly. No files to find or drag.
         </p>
-        <SharePointUpload
-          getAuditId={ensureAuditId}
-          onSaved={(items) => setContentItems((prev) => [...prev, ...items])}
-        />
         {contentItems.length > 0 && (
-          <p className="app__subtitle">{contentItems.length} SharePoint item(s) saved.</p>
+          <p className="app__subtitle">{contentItems.length} SharePoint item(s) added so far.</p>
         )}
+        <details className="new-audit__manual-upload">
+          <summary>Prefer to add files by hand instead?</summary>
+          <SharePointUpload
+            getAuditId={ensureAuditId}
+            onSaved={(items) => setContentItems((prev) => [...prev, ...items])}
+          />
+        </details>
       </section>
 
       {error && <p className="app__error">{error}</p>}

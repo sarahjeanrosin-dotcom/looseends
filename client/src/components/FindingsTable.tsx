@@ -80,6 +80,7 @@ export function FindingsTable({ auditId, findings }: FindingsTableProps) {
             <tr>
               <th>Title / URL</th>
               <th>Source</th>
+              <th>Legacy copy</th>
               <th>Reason flagged</th>
               <th>Suggested action</th>
               <th>
@@ -101,6 +102,7 @@ export function FindingsTable({ auditId, findings }: FindingsTableProps) {
                   <div className="app__saved-path">{f.url_or_path}</div>
                 </td>
                 <td>{SOURCE_LABELS[f.source]}</td>
+                <td>{f.legacy_copy ? <q>{f.legacy_copy}</q> : <span className="app__saved-meta">—</span>}</td>
                 <td>{f.reason}</td>
                 <td>{f.suggested_action}</td>
                 <td>{f.lift_score != null && f.lift_label && <LiftBadge score={f.lift_score} label={f.lift_label} />}</td>

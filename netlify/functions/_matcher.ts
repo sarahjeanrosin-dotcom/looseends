@@ -29,6 +29,13 @@ const RelevanceVerdictSchema = z.object({
         "it's unrelated to the release; use \"medium\" or \"low\" for closer calls."
     ),
   reason: z.string().describe("1-3 sentence explanation of the verdict."),
+  legacy_copy: z
+    .string()
+    .describe(
+      "The exact outdated text, quoted verbatim from the excerpt, that needs to change — " +
+        "so someone can find it and replace it directly. Empty string if not relevant, or if " +
+        "the issue is an omission (nothing missing to quote) rather than something stated incorrectly."
+    ),
   suggested_action: z
     .string()
     .describe("Concrete suggested edit if relevant; empty string if not relevant."),
@@ -84,6 +91,8 @@ Release context:
 ${releaseContext}
 
 For each piece of existing content you're shown, decide whether it needs to be updated because of this release — e.g. it describes a feature that changed, omits something new the release adds, uses terminology or numbers the release makes outdated, or states something the release now contradicts. Content that's simply unrelated to the release is not relevant, even if it's about the same general product area.
+
+The person reading your output is often not the one who'll make the edit — they hand a list of findings to whoever owns the actual page or file. So when the issue is something the content currently *says* (not just omits), quote the exact outdated text verbatim in legacy_copy — enough that a search-and-replace would find it — so that person can locate it without re-reading the whole asset themselves.
 
 If relevant, estimate how much work updating it would be using this lift scale:
 ${LIFT_SCALE_TEXT}

@@ -216,3 +216,19 @@
   font-weight: 600;
   padding: 0 0.3rem;
 }
+
+/* New Audit: secondary "manual upload" fallback, collapsed by default */
+
+.new-audit__manual-upload {
+  margin-top: 0.75rem;
+}
+
+.new-audit__manual-upload summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.new-audit__manual-upload[open] summary {
+  margin-bottom: 1rem;
+}

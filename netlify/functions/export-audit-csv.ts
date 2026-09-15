@@ -9,11 +9,15 @@ import { supabase } from "./_supabase";
 import { json } from "./_http";
 import type { Audit, Finding } from "./_types";
 
+// Extends the spec's original 8 columns with "Legacy Copy" — the exact
+// outdated text to find and replace, so this CSV is a directly actionable
+// handoff to whoever owns the page/file, not just a list of things to review.
 const COLUMNS = [
   "Release Name",
   "Source",
   "Title",
   "URL or Path",
+  "Legacy Copy",
   "Reason",
   "Suggested Action",
   "Lift Score",
@@ -40,6 +44,7 @@ function buildCsv(audit: Pick<Audit, "release_name">, findings: Finding[]): stri
       f.source,
       f.title,
       f.url_or_path,
+      f.legacy_copy,
       f.reason,
       f.suggested_action,
       f.lift_score,

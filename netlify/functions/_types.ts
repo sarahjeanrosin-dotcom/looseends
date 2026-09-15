@@ -68,6 +68,8 @@ export interface Finding {
   /** relevant=false but not high-confidence — kept for human review per Stage 3 step 4. */
   borderline: boolean;
   reason: string | null;
+  /** The exact outdated text, quoted verbatim, that needs to change — for locating it directly. */
+  legacy_copy: string | null;
   suggested_action: string | null;
   lift_score: number | null; // 1-5
   lift_label: string | null;
