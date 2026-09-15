@@ -50,6 +50,19 @@ export interface ReleaseBrief {
   created_at: string;
 }
 
+export type SharePointRequestStatus = "pending" | "fulfilled" | "failed";
+
+/** A queued plain-language SharePoint search request, fulfilled by a scheduled Claude agent. */
+export interface SharePointRequest {
+  id: string;
+  audit_id: string;
+  prompt: string;
+  status: SharePointRequestStatus;
+  summary: string | null;
+  created_at: string;
+  fulfilled_at: string | null;
+}
+
 export type ContentItemSource = "website" | "sharepoint";
 
 /** A saved row from the `content_items` table, as returned by the API. */

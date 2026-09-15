@@ -1,6 +1,6 @@
 // Thin fetch wrappers around the Netlify Functions API, shared by the New
 // Audit and Audit Results screens.
-import type { Audit, AuditWithLiftCounts, ContentItem, Finding, ReleaseBrief } from "./types";
+import type { Audit, AuditWithLiftCounts, ContentItem, Finding, ReleaseBrief, SharePointRequest } from "./types";
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
@@ -44,10 +44,25 @@ export function updateAudit(
   });
 }
 
-export function getAudit(
-  id: string
-): Promise<{ audit: Audit; findings: Finding[]; contentItems: ContentItem[]; releaseBriefs: ReleaseBrief[] }> {
+export function getAudit(id: string): Promise<{
+  audit: Audit;
+  findings: Finding[];
+  contentItems: ContentItem[];
+  releaseBriefs: ReleaseBrief[];
+  sharepointRequests: SharePointRequest[];
+}> {
   return request(`/.netlify/functions/get-audit?id=${encodeURIComponent(id)}`);
+}
+
+export function createSharepointRequest(
+  auditId: string,
+  prompt: string
+): Promise<{ sharepointRequest: SharePointRequest }> {
+  return request("/.netlify/functions/create-sharepoint-request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audit_id: auditId, prompt }),
+  });
 }
 
 export function createBriefUploadUrl(

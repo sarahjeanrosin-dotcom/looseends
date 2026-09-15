@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { SharePointUpload } from "../components/SharePointUpload";
 import { ReleaseBriefUpload } from "../components/ReleaseBriefUpload";
+import { SharePointRequestBox } from "../components/SharePointRequestBox";
 import { createAudit, updateAudit } from "../lib/api";
-import type { ContentItem, ReleaseBrief } from "../lib/types";
+import type { ContentItem, ReleaseBrief, SharePointRequest } from "../lib/types";
 
 interface NewAuditPageProps {
   /** Called once the audit exists and Run Audit is clicked — navigates to the Results screen. */
@@ -15,6 +16,7 @@ export function NewAuditPage({ onAuditReady }: NewAuditPageProps) {
   const [auditId, setAuditId] = useState<string | null>(null);
   const [releaseBriefs, setReleaseBriefs] = useState<ReleaseBrief[]>([]);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [sharepointRequests, setSharepointRequests] = useState<SharePointRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
@@ -99,10 +101,14 @@ export function NewAuditPage({ onAuditReady }: NewAuditPageProps) {
       <section className="app__section">
         <h2>SharePoint content</h2>
         <p className="app__subtitle">
-          Ask Claude, in plain language, to pull it for you — e.g. <em>"pull SharePoint content
-          for this audit about [topic]."</em> It searches the Marketing site, reads what's
-          relevant, and adds it directly. No files to find or drag.
+          Describe what to look for in the Marketing site. A scheduled Claude agent checks for
+          requests periodically, searches, and adds what's relevant — no files to find or drag.
         </p>
+        <SharePointRequestBox
+          getAuditId={ensureAuditId}
+          requests={sharepointRequests}
+          onCreated={(r) => setSharepointRequests((prev) => [r, ...prev])}
+        />
         {contentItems.length > 0 && (
           <p className="app__subtitle">{contentItems.length} SharePoint item(s) added so far.</p>
         )}

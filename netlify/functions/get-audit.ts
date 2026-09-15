@@ -1,7 +1,8 @@
 // GET /.netlify/functions/get-audit?id=<audit_id>
-// Gets one audit plus its findings, content items, and release briefs.
-// Backs the Audit Results screen (Stage 4) and the drill-in from Past
-// Audits (Stage 6). CSV formatting is a separate endpoint (Stage 5).
+// Gets one audit plus its findings, content items, release briefs, and
+// pending/past SharePoint requests. Backs the Audit Results screen (Stage 4)
+// and the drill-in from Past Audits (Stage 6). CSV formatting is a separate
+// endpoint (Stage 5).
 import type { Handler } from "@netlify/functions";
 import { supabase } from "./_supabase";
 import { json } from "./_http";
@@ -21,11 +22,13 @@ export const handler: Handler = async (event) => {
     { data: findings, error: findingsError },
     { data: contentItems, error: contentItemsError },
     { data: releaseBriefs, error: releaseBriefsError },
+    { data: sharepointRequests, error: sharepointRequestsError },
   ] = await Promise.all([
     supabase.from("audits").select("*").eq("id", id).single(),
     supabase.from("findings").select("*").eq("audit_id", id),
     supabase.from("content_items").select("*").eq("audit_id", id),
     supabase.from("release_briefs").select("*").eq("audit_id", id),
+    supabase.from("sharepoint_requests").select("*").eq("audit_id", id).order("created_at", { ascending: false }),
   ]);
 
   if (auditError) {
@@ -40,6 +43,9 @@ export const handler: Handler = async (event) => {
   if (releaseBriefsError) {
     return json(500, { error: releaseBriefsError.message });
   }
+  if (sharepointRequestsError) {
+    return json(500, { error: sharepointRequestsError.message });
+  }
 
-  return json(200, { audit, findings, contentItems, releaseBriefs });
+  return json(200, { audit, findings, contentItems, releaseBriefs, sharepointRequests });
 };

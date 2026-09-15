@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { crawlWebsite, getAudit, runAuditPassChunk } from "../lib/api";
-import type { Audit, ContentItem, Finding } from "../lib/types";
+import type { Audit, ContentItem, Finding, SharePointRequest } from "../lib/types";
 import { FindingsTable } from "../components/FindingsTable";
+import { SharePointRequestBox } from "../components/SharePointRequestBox";
 
 const POLL_INTERVAL_MS = 1500;
 
@@ -13,6 +14,7 @@ interface AuditResultsPageProps {
 export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
   const [audit, setAudit] = useState<Audit | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [sharepointRequests, setSharepointRequests] = useState<SharePointRequest[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [driveError, setDriveError] = useState<string | null>(null);
   const hasStartedDriving = useRef(false);
@@ -22,6 +24,7 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
       const data = await getAudit(auditId);
       setAudit(data.audit);
       setFindings(data.findings);
+      setSharepointRequests(data.sharepointRequests);
       return data;
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : String(err));
@@ -71,6 +74,7 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
       if (!data || cancelled) return;
       setAudit(data.audit);
       setFindings(data.findings);
+      setSharepointRequests(data.sharepointRequests);
       if (data.audit.status !== "complete" && !hasStartedDriving.current) {
         hasStartedDriving.current = true;
         driveAudit(data.contentItems);
@@ -83,6 +87,7 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
       if (!data || cancelled) return;
       setAudit(data.audit);
       setFindings(data.findings);
+      setSharepointRequests(data.sharepointRequests);
       if (data.audit.status === "complete") {
         clearInterval(interval);
       }
@@ -107,6 +112,19 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
         <>
           <h1>{audit.release_name}</h1>
           {audit.description && <p className="app__subtitle">{audit.description}</p>}
+
+          <section className="app__section">
+            <h2>SharePoint content</h2>
+            <p className="app__subtitle">
+              Describe what to look for in the Marketing site. A scheduled Claude agent checks for
+              requests periodically and adds what's relevant.
+            </p>
+            <SharePointRequestBox
+              getAuditId={async () => auditId}
+              requests={sharepointRequests}
+              onCreated={(r) => setSharepointRequests((prev) => [r, ...prev])}
+            />
+          </section>
 
           {audit.status !== "complete" ? (
             <section className="app__section">

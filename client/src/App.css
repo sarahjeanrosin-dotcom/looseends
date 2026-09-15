@@ -232,3 +232,17 @@
 .new-audit__manual-upload[open] summary {
   margin-bottom: 1rem;
 }
+
+/* SharePoint request box */
+
+.sharepoint-request__form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sharepoint-request__form input {
+  flex: 1;
+  padding: 0.5rem;
+  max-width: 480px;
+}
