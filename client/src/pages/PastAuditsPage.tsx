@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listAudits } from "../lib/api";
+import { deleteAudit, listAudits } from "../lib/api";
 import type { AuditWithLiftCounts } from "../lib/types";
 import { LiftCountsSummary } from "../components/LiftBadge";
 
@@ -10,6 +10,8 @@ interface PastAuditsPageProps {
 export function PastAuditsPage({ onSelectAudit }: PastAuditsPageProps) {
   const [audits, setAudits] = useState<AuditWithLiftCounts[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     listAudits()
@@ -17,11 +19,28 @@ export function PastAuditsPage({ onSelectAudit }: PastAuditsPageProps) {
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
 
+  async function handleDelete(audit: AuditWithLiftCounts) {
+    if (!window.confirm(`Delete "${audit.release_name}"? This removes all its findings and content, and can't be undone.`)) {
+      return;
+    }
+    setDeleteError(null);
+    setDeletingId(audit.id);
+    try {
+      await deleteAudit(audit.id);
+      setAudits((prev) => (prev ? prev.filter((a) => a.id !== audit.id) : prev));
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="page">
       <h1>Past Audits</h1>
 
       {error && <p className="app__error">{error}</p>}
+      {deleteError && <p className="app__error">{deleteError}</p>}
 
       {audits === null && !error && <p className="app__subtitle">Loading…</p>}
 
@@ -54,7 +73,24 @@ export function PastAuditsPage({ onSelectAudit }: PastAuditsPageProps) {
                   <LiftCountsSummary counts={audit.liftCounts} />
                 </td>
                 <td>
-                  <a href={`/.netlify/functions/export-audit-csv?id=${encodeURIComponent(audit.id)}`}>CSV</a>
+                  <details className="past-audits__menu">
+                    <summary className="past-audits__menu-trigger" aria-label="Audit actions">
+                      ⋮
+                    </summary>
+                    <div className="past-audits__menu-items">
+                      <a href={`/.netlify/functions/export-audit-csv?id=${encodeURIComponent(audit.id)}`}>
+                        Download CSV
+                      </a>
+                      <button
+                        type="button"
+                        className="past-audits__menu-delete"
+                        onClick={() => handleDelete(audit)}
+                        disabled={deletingId === audit.id}
+                      >
+                        {deletingId === audit.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </details>
                 </td>
               </tr>
             ))}

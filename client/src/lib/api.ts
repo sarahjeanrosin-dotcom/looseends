@@ -25,6 +25,14 @@ export function listAudits(): Promise<{ audits: AuditWithLiftCounts[] }> {
   return request("/.netlify/functions/list-audits");
 }
 
+export function deleteAudit(auditId: string): Promise<{ deleted: boolean }> {
+  return request("/.netlify/functions/delete-audit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audit_id: auditId }),
+  });
+}
+
 export function createAudit(releaseName: string, description?: string): Promise<{ audit: Audit }> {
   return request("/.netlify/functions/create-audit", {
     method: "POST",

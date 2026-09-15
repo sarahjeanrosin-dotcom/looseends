@@ -199,6 +199,68 @@
   cursor: pointer;
 }
 
+.past-audits__menu {
+  position: relative;
+  display: inline-block;
+}
+
+.past-audits__menu-trigger {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.past-audits__menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.past-audits__menu-trigger:hover {
+  background: var(--border);
+}
+
+.past-audits__menu-items {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  padding: 0.25rem;
+}
+
+.past-audits__menu-items a,
+.past-audits__menu-items button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.past-audits__menu-items a:hover,
+.past-audits__menu-items button:hover {
+  background: var(--border);
+}
+
+.past-audits__menu-delete {
+  color: #c0392b;
+}
+
 .lift-counts {
   display: inline-flex;
   gap: 0.3rem;
