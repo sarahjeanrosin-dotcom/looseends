@@ -6,6 +6,8 @@ import { SharePointRequestBox } from "../components/SharePointRequestBox";
 
 const POLL_INTERVAL_MS = 1500;
 
+type DrivePhase = "idle" | "crawling" | "matching";
+
 interface AuditResultsPageProps {
   auditId: string;
   onBack: () => void;
@@ -17,6 +19,8 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
   const [sharepointRequests, setSharepointRequests] = useState<SharePointRequest[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [driveError, setDriveError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<DrivePhase>("idle");
+  const [matchingProgress, setMatchingProgress] = useState<{ processed: number; total: number } | null>(null);
   const hasStartedDriving = useRef(false);
 
   async function refresh() {
@@ -42,6 +46,7 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
     try {
       const hasWebsiteContent = contentItems.some((item) => item.source === "website");
       if (!hasWebsiteContent) {
+        setPhase("crawling");
         try {
           await crawlWebsite(auditId);
         } catch (err) {
@@ -50,14 +55,17 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
           setDriveError(`Website crawl failed: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
+      setPhase("matching");
       let done = false;
       while (!done) {
         const result = await runAuditPassChunk(auditId);
+        setMatchingProgress({ processed: result.processedItems, total: result.totalItems });
         done = result.done;
       }
     } catch (err) {
       setDriveError(err instanceof Error ? err.message : String(err));
     } finally {
+      setPhase("idle");
       refresh();
     }
   }
@@ -129,7 +137,12 @@ export function AuditResultsPage({ auditId, onBack }: AuditResultsPageProps) {
           {audit.status !== "complete" ? (
             <section className="app__section">
               <p className="app__subtitle">
-                Status: {audit.status} — {audit.progress}%
+                {phase === "crawling" && "⏳ Crawling the website for content…"}
+                {phase === "matching" &&
+                  (matchingProgress
+                    ? `⏳ Analyzing content — ${matchingProgress.processed}/${matchingProgress.total} evaluated`
+                    : "⏳ Analyzing content…")}
+                {phase === "idle" && `Status: ${audit.status} — ${audit.progress}%`}
               </p>
               <progress value={audit.progress} max={100} style={{ width: "100%" }} />
               {driveError && <p className="app__error">{driveError}</p>}

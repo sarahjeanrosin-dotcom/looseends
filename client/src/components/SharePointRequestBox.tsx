@@ -10,7 +10,7 @@ interface SharePointRequestBoxProps {
 }
 
 const STATUS_LABEL: Record<SharePointRequest["status"], string> = {
-  pending: "Queued — ask Claude to run it",
+  pending: "Received — waiting for Claude to search",
   fulfilled: "Done",
   failed: "Failed",
 };
@@ -25,16 +25,23 @@ export function SharePointRequestBox({ getAuditId, requests, onCreated }: ShareP
   const [prompt, setPrompt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The prompt just submitted, shown as an explicit acknowledgment banner —
+  // "it's in the list" isn't obviously enough confirmation on its own that
+  // the request was actually received, especially the first time.
+  const [justAcknowledged, setJustAcknowledged] = useState<string | null>(null);
 
   async function handleSubmit() {
     if (!prompt.trim()) return;
     setError(null);
+    setJustAcknowledged(null);
     setIsSubmitting(true);
     try {
       const auditId = await getAuditId();
-      const { sharepointRequest } = await createSharepointRequest(auditId, prompt.trim());
+      const submittedPrompt = prompt.trim();
+      const { sharepointRequest } = await createSharepointRequest(auditId, submittedPrompt);
       onCreated(sharepointRequest);
       setPrompt("");
+      setJustAcknowledged(submittedPrompt);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -59,6 +66,16 @@ export function SharePointRequestBox({ getAuditId, requests, onCreated }: ShareP
         </button>
       </div>
       {error && <p className="app__error">{error}</p>}
+
+      {justAcknowledged && (
+        <p className="sharepoint-request__ack">
+          ✓ Received: <em>"{justAcknowledged}"</em> — queued. Ask Claude, in a chat session, to run
+          it whenever you're ready.{" "}
+          <button type="button" className="sharepoint-request__ack-dismiss" onClick={() => setJustAcknowledged(null)}>
+            Dismiss
+          </button>
+        </p>
+      )}
 
       {requests.length > 0 && (
         <ul className="app__saved-list">
