@@ -8,7 +8,8 @@
     "build:client": "npm run build --workspace client",
     "dev": "netlify dev",
     "crawl:test": "tsx scripts/crawl-test.ts",
-    "audit:test": "tsx scripts/run-audit-test.ts"
+    "audit:test": "tsx scripts/run-audit-test.ts",
+    "sharepoint:crawl": "tsx scripts/sharepoint-crawl.ts"
   },
   "workspaces": [
     "client"

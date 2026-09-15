@@ -114,30 +114,43 @@ serving any page. Rotate it any time from the same screen.
 
 ## Getting SharePoint content into an audit
 
-Two ways to get SharePoint content into `content_items` — same endpoint (`add-content-items`)
-either way, so nothing downstream (the AI pass, the Results screen) knows or cares which one you used:
+Three ways to get SharePoint content in — all end up in the same place (`content_items` via
+`add-content-items`, or `release_briefs` via `finalize-release-brief`), so nothing downstream (the
+AI pass, the Results screen) knows or cares which one you used:
 
 **1. Upload it yourself** — the SharePoint upload widget on the New Audit screen (Stage 1).
 Drag in files you've already pulled, or paste text directly, with an optional reference URL per
 item. Always available, no live Claude session required.
 
-**2. Ask Claude to pull it live** — in a Claude Code session with the Microsoft 365 connector
-(this repo's sessions have it), just ask, e.g. *"Pull SharePoint content from the Marketing site
-for the Web Provisioning audit — it's about wallet-based mobile credential provisioning."* Claude
-searches the Marketing SharePoint site (`genea.sharepoint.com/sites/Marketing`) with
-`sharepoint_search`/`sharepoint_folder_search`, reads matches with `read_resource`, and pushes the
-relevant ones straight into the audit via `add-content-items` — no separate chat, no manual
-export/upload round-trip. Give it the audit name (or id) and a topic/keywords; it works best
-scoped to one release rather than "pull everything," since the Marketing site has hundreds of
-files.
+**2. Just ask, in plain language** — this is the normal path. In a Claude Code session with the
+Microsoft 365 connector (this repo's sessions have it), say something like *"Pull SharePoint
+content from the Marketing site for the Web Provisioning audit — it's about wallet-based mobile
+credential provisioning."* Claude searches the Marketing SharePoint site
+(`genea.sharepoint.com/sites/Marketing`) with `sharepoint_search`/`sharepoint_folder_search`,
+reads matches with `read_resource`, judges what's an existing asset to check (→ content item) vs.
+the release's own product brief (→ release brief), and pushes it in — no upload, no manual
+export. Give it the audit name (or id) and a topic/keywords rather than "pull everything," since
+the Marketing site has hundreds of files.
 
-This mirrors `contentcrawl`'s approach (a sibling project — a broader quarterly content-quality
-audit, kept separate on purpose; see conversation history for the comparison): neither project
-does *live, unattended* SharePoint search from the deployed app itself. That would need an Azure
-AD app registration with Graph API permissions and admin consent — real infrastructure, not
-something either app is built for. What both actually do is have Claude pull SharePoint content
-by hand, live, during a session that already has the Microsoft 365 connector — this app just
-skips contentcrawl's extra step of caching that pull into a committed file first.
+**3. `scripts/sharepoint-crawl.ts`** — the mechanism behind #2, formalized so a live session
+doesn't hand-write a one-off script each time. It takes a small JSON file (`{ auditId, items: [{
+kind: "content" | "brief", title, url, contentText }] }`), skips anything whose `url` already
+exists on the audit (so pushing again after finding more results is safe — verified: re-submitting
+an already-present item was correctly skipped, a new one was pushed), and posts the rest to the
+right endpoint:
+```bash
+npx tsx scripts/sharepoint-crawl.ts path/to/items.json
+```
+Claude fills in that JSON from what it finds via the connector and runs this — you never write the
+JSON or invoke the script yourself, you just ask in plain language (#2).
+
+**Why not a live automated crawl with no Claude in the loop?** That would need an Azure AD app
+registration with Graph API permissions and admin consent — real infrastructure this app
+deliberately doesn't build, matching `contentcrawl` (a sibling project — a broader quarterly
+content-quality audit, kept separate on purpose): neither project does *unattended* SharePoint
+search from the deployed app itself. Both instead have Claude pull SharePoint content live, in a
+session that already has the Microsoft 365 connector — this app just skips contentcrawl's extra
+step of caching that pull into a committed file first.
 
 ## Status
 
