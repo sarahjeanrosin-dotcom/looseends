@@ -121,16 +121,23 @@ AI pass, the Results screen) knows or cares which one you used:
 **1. The prompt box in the app — the normal path.** Every audit (New Audit and Results screens)
 has a "SharePoint content" box: type what to look for (e.g. *"Search Marketing for wallet-based
 mobile credential content"*) and submit — this queues a `sharepoint_requests` row, status
-`pending`. Nothing searches SharePoint automatically; **ask Claude, in a chat session, to run the
-"SharePoint Request Fulfiller" agent** (`RemoteTrigger` with `action: "run"`, trigger id
-`trig_01EaZAUWyAbWREueacknTrAj` — https://claude.ai/code/routines/trig_01EaZAUWyAbWREueacknTrAj).
-It's a scheduled-agent routine but its cron is disabled on purpose (Sarah didn't want it polling
-hourly) — it only ever runs when explicitly fired. One run: fetches every pending request across
-all audits, searches **only** `genea.sharepoint.com/sites/Marketing` (a hard constraint in its
-prompt — any result outside that site is discarded, no exceptions), reads the most relevant
-documents, classifies each as a content item or a release brief, checks for duplicates, pushes new
-ones in, and marks each request fulfilled (or failed) with a one-line summary you'll see next to
-the request in the app.
+`pending`. Nothing searches SharePoint automatically; **ask Claude, in a live chat session, to
+check for and fulfill pending SharePoint requests.** Claude fetches
+`list-pending-sharepoint-requests`, and for each one searches **only**
+`genea.sharepoint.com/sites/Marketing` (a hard rule — any result outside that site is discarded, no
+exceptions), reads the most relevant documents, classifies each as a content item or a release
+brief, checks for duplicates, pushes new ones in via `add-content-items` /
+`finalize-release-brief`, and calls `fulfill-sharepoint-request` with a one-line summary you'll see
+next to the request in the app.
+
+*(There's a disabled, unused scheduled-agent routine called "SharePoint Request Fulfiller"
+tied to this queue — don't use it. Its cloud sandbox can't reach `loosends.netlify.app` at all
+(blocked by the sandbox's network egress policy, confirmed by an actual failed run — a 403 on
+every outbound request to the app), so `RemoteTrigger action:"run"` on it will always fail. A
+live interactive chat session doesn't have that restriction, which is why the "just ask Claude"
+path above works and the routine doesn't. It can be deleted from
+[claude.ai/code/routines](https://claude.ai/code/routines) whenever convenient — it's inert as
+long as no one re-enables or fires it.)*
 
 **2. Just ask, in plain language, without the queue** — for when you're already in a chat session
 and don't need the app-side record. Say something like *"Pull SharePoint content from the
